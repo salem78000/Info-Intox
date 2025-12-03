@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Distracteurs au Volant - Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Fredoka',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);height:100vh;width:100vw;overflow:hidden;display:flex;flex-direction:column;color:#fff}
+.header{text-align:center;padding:clamp(15px,2vh,25px);background:rgba(0,0,0,.2);flex-shrink:0}
+.header h1{font-size:clamp(2em,4vw,3em);margin-bottom:5px;text-shadow:0 3px 10px rgba(0,0,0,.3)}
+.header .subtitle{font-size:clamp(1em,1.5vw,1.2em);opacity:.9}
+.progress-bar{background:rgba(255,255,255,.2);padding:clamp(10px,1.5vh,15px) clamp(20px,3vw,30px);font-size:clamp(1.2em,2vw,1.5em);font-weight:600;flex-shrink:0}
+.main-content{flex:1;display:flex;padding:clamp(10px,1.5vh,20px);gap:clamp(12px,1.5vw,20px);min-height:0}
+.question-panel{flex:2;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(255,255,255,.1);border-radius:clamp(20px,3vw,30px);padding:clamp(30px,4vh,50px);backdrop-filter:blur(10px);box-shadow:0 20px 60px rgba(0,0,0,.3);overflow-y:auto}
+.question-number{font-size:clamp(1.5em,2.5vw,2em);opacity:.8;margin-bottom:clamp(10px,1.5vh,15px)}
+.question-text{font-size:clamp(2em,3.5vw,3.5em);text-align:center;line-height:1.3;margin-bottom:clamp(20px,3vh,35px);font-weight:600}
+.vote-instruction{font-size:clamp(1.2em,2vw,1.8em);opacity:.9;text-align:center;padding:clamp(15px,2vh,20px);background:rgba(255,255,255,.1);border-radius:15px;margin-bottom:clamp(15px,2vh,25px)}
+.stats-panel{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;gap:clamp(8px,1vh,12px);overflow:hidden;min-width:280px;align-content:start}
+.counter-box{background:rgba(255,255,255,.95);border-radius:12px;padding:clamp(12px,1.5vh,18px);box-shadow:0 10px 30px rgba(0,0,0,.2);color:#2d3142}
+.counter-title{font-size:clamp(0.95em,1.3vw,1.15em);font-weight:600;margin-bottom:clamp(6px,0.8vh,10px);display:flex;align-items:center;gap:6px}
+.counter-value{font-size:clamp(2.5em,4vw,3.5em);font-weight:700;text-align:center;margin:clamp(8px,1vh,12px) 0}
+.counter-buttons{display:flex;gap:clamp(8px,1vw,12px)}
+.counter-btn{flex:1;padding:clamp(10px,1.2vh,14px);border:none;border-radius:10px;font-size:clamp(0.95em,1.3vw,1.15em);font-weight:600;cursor:pointer;transition:all .3s;font-family:'Fredoka',sans-serif}
+.counter-btn:active{transform:scale(.95)}
+.btn-plus{background:#4ecdc4;color:#fff}
+.btn-minus{background:#ff6b9d;color:#fff}
+.btn-reset{background:#999;color:#fff;width:100%;margin-top:clamp(6px,1vh,10px)}
+.info-counter{border-left:5px solid #26c485}
+.info-counter .counter-value{color:#26c485}
+.intox-counter{border-left:5px solid #ff4757}
+.intox-counter .counter-value{color:#ff4757}
+.chart-container{background:rgba(255,255,255,.95);border-radius:15px;padding:clamp(12px,1.5vh,18px);box-shadow:0 10px 30px rgba(0,0,0,.2);color:#2d3142;grid-column:1/3}
+.chart-title{font-size:clamp(0.95em,1.3vw,1.15em);font-weight:600;margin-bottom:clamp(8px,1vh,12px);text-align:center}
+.chart-bars{display:flex;gap:clamp(12px,1.5vw,18px);margin-bottom:clamp(12px,1.5vh,18px)}
+.chart-bar{flex:1;text-align:center}
+.bar-container{height:clamp(80px,10vh,120px);background:#f0f0f0;border-radius:10px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;margin-bottom:6px}
+.bar-fill{width:100%;transition:height .5s ease;display:flex;align-items:center;justify-content:center;font-size:clamp(1.1em,1.6vw,1.4em);font-weight:700;color:#fff}
+.bar-fill.info{background:linear-gradient(to top,#26c485,#4ecdc4)}
+.bar-fill.intox{background:linear-gradient(to top,#ff4757,#ff6b9d)}
+.bar-label{font-size:clamp(0.9em,1.2vw,1.05em);font-weight:600}
+.control-buttons{display:flex;gap:clamp(10px,1.5vw,15px);padding:clamp(15px,2vh,25px);justify-content:center;flex-shrink:0;flex-wrap:wrap}
+.nav-btn{padding:clamp(12px,1.5vh,18px) clamp(25px,3vw,35px);border:none;border-radius:12px;font-size:clamp(1em,1.3vw,1.2em);font-weight:600;cursor:pointer;font-family:'Fredoka',sans-serif;transition:all .3s;color:#fff}
+.nav-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,.3)}
+.btn-prev{background:#ff6b35}
+.btn-next{background:#4ecdc4}
+.btn-reveal{background:#f7931e}
+.answer-revealed{margin-top:clamp(15px,2vh,25px);padding:clamp(20px,2.5vh,28px);background:rgba(255,255,255,.2);border-radius:15px;text-align:center;animation:fadeIn .5s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+.answer-badge{display:inline-block;padding:clamp(15px,2vh,20px) clamp(30px,4vw,40px);border-radius:15px;font-size:clamp(2em,3vw,2.8em);font-weight:700;margin-bottom:clamp(12px,1.5vh,18px)}
+.answer-badge.correct{background:#26c485}
+.answer-badge.wrong{background:#ff4757}
+.explanation{font-size:clamp(1.2em,1.8vw,1.6em);line-height:1.5;margin-top:clamp(12px,1.5vh,18px)}
+.hidden{display:none}
+
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:1000;justify-content:center;align-items:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-content{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:25px;padding:clamp(25px,4vh,45px);max-width:900px;width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5);position:relative}
+.modal-header{text-align:center;margin-bottom:clamp(20px,3vh,35px)}
+.modal-header h2{font-size:clamp(2em,4vw,3.5em);color:#fff;margin-bottom:clamp(10px,1.5vh,15px);text-shadow:0 3px 10px rgba(0,0,0,.3)}
+.modal-header p{font-size:clamp(1em,1.8vw,1.3em);color:#fff;opacity:.9}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(15px,2vh,25px);margin-bottom:clamp(20px,3vh,30px)}
+@media(max-width:768px){.stats-grid{grid-template-columns:1fr}}
+.stat-card{background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border-radius:15px;padding:clamp(15px,2vh,25px);text-align:center;border:2px solid rgba(255,255,255,.3)}
+.stat-card h3{font-size:clamp(0.9em,1.2vw,1em);color:#fff;margin-bottom:clamp(8px,1vh,12px);opacity:.9}
+.stat-card .big-number{font-size:clamp(2.5em,4vw,3.5em);color:#FFA500;font-weight:700;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+.stat-card.stat-success{border-color:#26c485}
+.stat-card.stat-success .big-number{color:#26c485}
+.stat-card.stat-error{border-color:#ff4757}
+.stat-card.stat-error .big-number{color:#ff4757}
+.stat-percent{font-size:clamp(1.2em,1.8vw,1.5em);color:#fff;font-weight:600;margin-top:clamp(5px,0.8vh,10px);opacity:.9}
+.questions-list{max-height:40vh;overflow-y:auto;margin-bottom:clamp(20px,3vh,25px)}
+.question-stat{background:rgba(255,255,255,.1);backdrop-filter:blur(5px);border-radius:12px;padding:clamp(12px,1.5vh,18px);margin-bottom:clamp(10px,1.2vh,15px);border-left:5px solid #FFA500}
+.question-stat-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px}
+.question-stat-number{font-weight:700;font-size:clamp(1em,1.3vw,1.1em);color:#FFA500}
+.question-stat-result{font-size:clamp(0.9em,1.2vw,1em);padding:4px 12px;border-radius:8px;font-weight:600}
+.result-correct{background:#26c485;color:#fff}
+.result-wrong{background:#ff4757;color:#fff}
+.question-stat-text{font-size:clamp(0.9em,1.1vw,1em);color:#fff;margin-bottom:8px;line-height:1.4}
+.question-stat-details{display:flex;justify-content:space-around;font-size:clamp(0.85em,1vw,0.95em);color:#fff;opacity:.9}
+.close-btn{background:#FFA500;color:#fff;border:none;padding:clamp(15px,2vh,20px) clamp(35px,4vw,50px);border-radius:15px;font-size:clamp(1.1em,1.5vw,1.3em);font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif;transition:all .3s;box-shadow:0 6px 20px rgba(255,165,0,.4);margin:0 auto;display:block}
+.close-btn:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(255,165,0,.6)}
+
+@media (max-width:1200px){.main-content{flex-direction:column}.stats-panel{min-width:auto}}
+@media (max-width:768px){.question-text{font-size:1.8em}.control-buttons{flex-direction:column;align-items:stretch}.nav-btn{width:100%}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="header">
+<h1>🚗 Quiz Distracteurs au Volant</h1>
+<div class="subtitle">Info ou Intox ?</div>
+</div>
+<div class="progress-bar" id="progressBar">Question 1 / 15</div>
+<div class="main-content">
+<div class="question-panel">
+<div class="question-number" id="questionNumber">Question 1</div>
+<div class="question-text" id="questionText"></div>
+<div class="vote-instruction">🟢 Levez <strong>INFO</strong> si c'est VRAI<br>🔴 Levez <strong>INTOX</strong> si c'est FAUX</div>
+<div id="answerReveal" class="answer-revealed hidden">
+<div class="answer-badge" id="answerBadge"></div>
+<div class="explanation" id="explanationText"></div>
+</div>
+</div>
+<div class="stats-panel">
+<div class="counter-box info-counter">
+<div class="counter-title">🟢 Réponses INFO</div>
+<div class="counter-value" id="infoCount">0</div>
+<div class="counter-buttons">
+<button class="counter-btn btn-minus" onclick="adjustCount('info',-1)">-</button>
+<button class="counter-btn btn-plus" onclick="adjustCount('info',1)">+</button>
+</div>
+<button class="counter-btn btn-reset" onclick="resetCount('info')">Réinitialiser</button>
+</div>
+<div class="counter-box intox-counter">
+<div class="counter-title">🔴 Réponses INTOX</div>
+<div class="counter-value" id="intoxCount">0</div>
+<div class="counter-buttons">
+<button class="counter-btn btn-minus" onclick="adjustCount('intox',-1)">-</button>
+<button class="counter-btn btn-plus" onclick="adjustCount('intox',1)">+</button>
+</div>
+<button class="counter-btn btn-reset" onclick="resetCount('intox')">Réinitialiser</button>
+</div>
+<div class="chart-container">
+<div class="chart-title">📊 Répartition en direct</div>
+<div class="chart-bars">
+<div class="chart-bar">
+<div class="bar-container"><div class="bar-fill info" id="infoBar">0%</div></div>
+<div class="bar-label" style="color:#26c485">INFO</div>
+</div>
+<div class="chart-bar">
+<div class="bar-container"><div class="bar-fill intox" id="intoxBar">0%</div></div>
+<div class="bar-label" style="color:#ff4757">INTOX</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="control-buttons">
+<button class="nav-btn btn-prev" onclick="prevQuestion()">← Précédent</button>
+<button class="nav-btn btn-reveal" onclick="revealAnswer()">📢 Révéler</button>
+<button class="nav-btn btn-next" onclick="nextQuestion()">Suivant →</button>
+</div>
+
+<div class="modal-overlay" id="statsModal">
+<div class="modal-content">
+<div class="modal-header">
+<h2>📊 Statistiques Globales</h2>
+<p>Résultats complets du quiz</p>
+</div>
+<div class="stats-grid">
+<div class="stat-card">
+<h3>Total Questions</h3>
+<div class="big-number" id="totalQuestions">15</div>
+</div>
+<div class="stat-card stat-success">
+<h3>✓ Bonnes Réponses</h3>
+<div class="big-number" id="totalCorrect">0</div>
+<div class="stat-percent" id="correctPercent">0%</div>
+</div>
+<div class="stat-card stat-error">
+<h3>✗ Mauvaises Réponses</h3>
+<div class="big-number" id="totalWrong">0</div>
+<div class="stat-percent" id="wrongPercent">0%</div>
+</div>
+</div>
+<div class="questions-list" id="questionsList"></div>
+<div style="display:flex;gap:15px;justify-content:center;flex-wrap:wrap">
+<button class="close-btn" style="background:#9333EA" onclick="downloadPDF()">📥 Télécharger PDF</button>
+<button class="close-btn" onclick="closeStats()">Fermer</button>
+</div>
+</div>
+</div>
+
+<script>
+const questions=[
+{"text":"Le kit mains libres est sans danger, car les mains restent sur le volant.","answer":"intox","explanation":"Le danger vient de la distraction cognitive : le cerveau partage son attention entre la route et la conversation."},
+{"text":"Lire un message en conduisant détourne les yeux de la route pendant environ 5 secondes.","answer":"info","explanation":"À 90 km/h, cela équivaut à traverser un terrain de foot sans regarder la route."},
+{"text":"Manger ou boire au volant ne distrait pas vraiment.","answer":"intox","explanation":"C'est une distraction physique (main occupée) et visuelle (regard détourné)."},
+{"text":"La radio peut aussi être un distracteur.","answer":"info","explanation":"Changer de station ou se concentrer sur une émission détourne l'attention."},
+{"text":"On peut estimer la distance de freinage même en discutant.","answer":"intox","explanation":"La distraction réduit la capacité de calcul et d'anticipation."},
+{"text":"Le cerveau humain est capable de gérer deux tâches complexes à la fois.","answer":"intox","explanation":"Le cerveau bascule d'une tâche à l'autre, il ne fait pas deux choses en même temps efficacement."},
+{"text":"Parler avec un passager est moins dangereux que parler au téléphone.","answer":"info","explanation":"Le passager voit la route et adapte la conversation à la situation (contrairement à un interlocuteur au téléphone)."},
+{"text":"La fatigue augmente l'effet des distracteurs.","answer":"info","explanation":"Moins on est vigilant, plus les distractions nous affectent."},
+{"text":"Les applications GPS vocales ne sont pas distrayantes.","answer":"intox","explanation":"Même vocales, elles sollicitent l'attention et peuvent induire des réactions tardives."},
+{"text":"Écrire un SMS en conduisant multiplie le risque d'accident par 3.","answer":"intox","explanation":"C'est pire : risque multiplié par 23 selon la Sécurité Routière."},
+{"text":"Il suffit de quelques secondes d'inattention pour provoquer un accident.","answer":"info","explanation":"La majorité des accidents liés à la distraction surviennent en moins de 5 secondes d'inattention."},
+{"text":"L'utilisation d'un téléphone professionnel au volant est tolérée si c'est pour le travail.","answer":"intox","explanation":"Le Code de la route interdit tout usage du téléphone tenu en main, y compris professionnel."},
+{"text":"Une conversation stressante au téléphone peut influencer notre conduite.","answer":"info","explanation":"Elle augmente le rythme cardiaque et la tension → comportements plus impulsifs."},
+{"text":"Envoyer un message vocal est plus sûr qu'un SMS.","answer":"intox","explanation":"Le temps d'appuyer, parler, vérifier le message… reste une distraction majeure."},
+{"text":"Les conducteurs expérimentés sont moins sensibles aux distracteurs.","answer":"intox","explanation":"Faux sentiment de maîtrise : ils prennent plus de risques en se croyant habitués."}
+];
+
+let currentQuestion=0,infoCount=0,intoxCount=0,questionStats=[];
+
+function showQuestion(){
+const q=questions[currentQuestion];
+document.getElementById("questionNumber").textContent="Question "+(currentQuestion+1);
+document.getElementById("questionText").textContent=q.text;
+document.getElementById("progressBar").textContent="Question "+(currentQuestion+1)+" / "+questions.length;
+document.getElementById("answerReveal").classList.add("hidden");
+resetCounts();
+}
+
+function adjustCount(type,delta){
+if(type==="info"){
+infoCount=Math.max(0,infoCount+delta);
+document.getElementById("infoCount").textContent=infoCount;
+}else{
+intoxCount=Math.max(0,intoxCount+delta);
+document.getElementById("intoxCount").textContent=intoxCount;
+}
+updateChart();
+}
+
+function resetCount(type){
+if(type==="info"){
+infoCount=0;
+document.getElementById("infoCount").textContent=0;
+}else{
+intoxCount=0;
+document.getElementById("intoxCount").textContent=0;
+}
+updateChart();
+}
+
+function resetCounts(){
+infoCount=0;
+intoxCount=0;
+document.getElementById("infoCount").textContent=0;
+document.getElementById("intoxCount").textContent=0;
+updateChart();
+}
+
+function updateChart(){
+const total=infoCount+intoxCount;
+const infoPercent=total>0?Math.round(infoCount/total*100):0;
+const intoxPercent=total>0?Math.round(intoxCount/total*100):0;
+const infoBar=document.getElementById("infoBar");
+const intoxBar=document.getElementById("intoxBar");
+infoBar.style.height=infoPercent+"%";
+infoBar.textContent=infoPercent+"%";
+intoxBar.style.height=intoxPercent+"%";
+intoxBar.textContent=intoxPercent+"%";
+}
+
+function saveQuestionStats(){
+const alreadySaved=questionStats.find(s=>s.questionNumber===currentQuestion+1);
+if(alreadySaved)return;
+
+const q=questions[currentQuestion];
+const total=infoCount+intoxCount;
+const correctCount=q.answer==="info"?infoCount:intoxCount;
+const wrongCount=total-correctCount;
+const successRate=total>0?Math.round((correctCount/total)*100):0;
+
+questionStats.push({
+questionNumber:currentQuestion+1,
+questionText:q.text,
+correctAnswer:q.answer,
+total:total,
+correctCount:correctCount,
+wrongCount:wrongCount,
+successRate:successRate
+});
+}
+
+function revealAnswer(){
+saveQuestionStats();
+
+const q=questions[currentQuestion];
+const answerBadge=document.getElementById("answerBadge");
+const explanationText=document.getElementById("explanationText");
+const answerReveal=document.getElementById("answerReveal");
+
+if(q.answer==="info"){
+answerBadge.textContent="✓ INFO (VRAI)";
+answerBadge.className="answer-badge correct";
+}else{
+answerBadge.textContent="✗ INTOX (FAUX)";
+answerBadge.className="answer-badge wrong";
+}
+
+if(q.explanation){
+explanationText.textContent="💡 "+q.explanation;
+}else{
+explanationText.textContent="";
+}
+
+answerReveal.classList.remove("hidden");
+}
+
+function nextQuestion(){
+saveQuestionStats();
+if(currentQuestion<questions.length-1){
+currentQuestion++;
+showQuestion();
+}else{
+showStatsModal();
+}
+}
+
+function prevQuestion(){
+if(currentQuestion>0){
+currentQuestion--;
+showQuestion();
+}
+}
+
+function showStatsModal(){
+const totalVotes=questionStats.reduce((sum,q)=>sum+q.total,0);
+const totalCorrectAnswers=questionStats.reduce((sum,q)=>sum+q.correctCount,0);
+const totalWrongAnswers=questionStats.reduce((sum,q)=>sum+q.wrongCount,0);
+const correctPercent=totalVotes>0?Math.round((totalCorrectAnswers/totalVotes)*100):0;
+const wrongPercent=totalVotes>0?Math.round((totalWrongAnswers/totalVotes)*100):0;
+
+document.getElementById("totalCorrect").textContent=totalCorrectAnswers;
+document.getElementById("correctPercent").textContent=correctPercent+"%";
+document.getElementById("totalWrong").textContent=totalWrongAnswers;
+document.getElementById("wrongPercent").textContent=wrongPercent+"%";
+
+const listHTML=questionStats.map(stat=>{
+const resultClass=stat.successRate>=50?"result-correct":"result-wrong";
+const resultText=stat.successRate>=50?"✓ Majorité correcte":"✗ Majorité incorrecte";
+return `<div class="question-stat">
+<div class="question-stat-header">
+<span class="question-stat-number">Question ${stat.questionNumber}</span>
+<span class="question-stat-result ${resultClass}">${resultText}</span>
+</div>
+<div class="question-stat-text">${stat.questionText.length>80?stat.questionText.substring(0,80)+"...":stat.questionText}</div>
+<div class="question-stat-details">
+<span>Total: <strong>${stat.total}</strong></span>
+<span>Bonnes: <strong>${stat.correctCount}</strong></span>
+<span>Mauvaises: <strong>${stat.wrongCount}</strong></span>
+<span>Taux: <strong>${stat.successRate}%</strong></span>
+</div>
+</div>`;
+}).join("");
+
+document.getElementById("questionsList").innerHTML=listHTML;
+document.getElementById("statsModal").classList.add("show");
+}
+
+function downloadPDF(){
+const{jsPDF}=window.jspdf;
+const doc=new jsPDF();
+
+const pageWidth=doc.internal.pageSize.getWidth();
+const pageHeight=doc.internal.pageSize.getHeight();
+let yPos=20;
+
+doc.setFillColor(102,126,234);
+doc.rect(0,0,pageWidth,40,"F");
+
+doc.setTextColor(255,255,255);
+doc.setFontSize(24);
+doc.setFont(undefined,"bold");
+doc.text("Statistiques Globales",pageWidth/2,25,{align:"center"});
+
+doc.setFontSize(12);
+doc.text("Quiz Distracteurs au Volant - Info ou Intox",pageWidth/2,35,{align:"center"});
+
+yPos=50;
+doc.setTextColor(0,0,0);
+
+doc.setFillColor(240,240,240);
+doc.roundedRect(15,yPos,pageWidth-30,50,3,3,"F");
+
+doc.setFontSize(11);
+doc.setTextColor(100,100,100);
+doc.text("Total Questions",25,yPos+15);
+doc.text("Bonnes Réponses",85,yPos+15);
+doc.text("Mauvaises Réponses",145,yPos+15);
+
+const totalVotes=questionStats.reduce((sum,q)=>sum+q.total,0);
+const totalCorrectAnswers=questionStats.reduce((sum,q)=>sum+q.correctCount,0);
+const totalWrongAnswers=questionStats.reduce((sum,q)=>sum+q.wrongCount,0);
+const correctPercent=totalVotes>0?Math.round((totalCorrectAnswers/totalVotes)*100):0;
+const wrongPercent=totalVotes>0?Math.round((totalWrongAnswers/totalVotes)*100):0;
+
+doc.setFontSize(20);
+doc.setFont(undefined,"bold");
+doc.setTextColor(255,165,0);
+doc.text("15",40,yPos+30,{align:"center"});
+
+doc.setTextColor(38,196,133);
+doc.text(totalCorrectAnswers.toString(),100,yPos+30,{align:"center"});
+
+doc.setTextColor(255,71,87);
+doc.text(totalWrongAnswers.toString(),160,yPos+30,{align:"center"});
+
+doc.setFontSize(10);
+doc.setTextColor(38,196,133);
+doc.text(correctPercent+"%",100,yPos+40,{align:"center"});
+
+doc.setTextColor(255,71,87);
+doc.text(wrongPercent+"%",160,yPos+40,{align:"center"});
+
+yPos=115;
+doc.setFontSize(14);
+doc.setTextColor(102,126,234);
+doc.setFont(undefined,"bold");
+doc.text("Détail par question",15,yPos);
+
+yPos+=10;
+doc.setFontSize(9);
+doc.setTextColor(0,0,0);
+doc.setFont(undefined,"normal");
+
+questionStats.forEach((stat,index)=>{
+if(yPos>pageHeight-30){
+doc.addPage();
+yPos=20;
+}
+
+const bgColor=stat.successRate>=50?[232,248,245]:[255,232,236];
+doc.setFillColor(...bgColor);
+doc.roundedRect(15,yPos,pageWidth-30,25,2,2,"F");
+
+doc.setFont(undefined,"bold");
+doc.setTextColor(102,126,234);
+doc.text("Q"+(index+1),20,yPos+8);
+
+doc.setFont(undefined,"normal");
+doc.setTextColor(0,0,0);
+const questionText=stat.questionText.length>70?stat.questionText.substring(0,70)+"...":stat.questionText;
+const lines=doc.splitTextToSize(questionText,pageWidth-80);
+doc.text(lines,35,yPos+8);
+
+doc.setFont(undefined,"bold");
+if(stat.successRate>=50){
+doc.setTextColor(38,196,133);
+doc.text("✓ "+stat.successRate+"%",pageWidth-30,yPos+8,{align:"right"});
+}else{
+doc.setTextColor(255,71,87);
+doc.text("✗ "+stat.successRate+"%",pageWidth-30,yPos+8,{align:"right"});
+}
+
+doc.setFont(undefined,"normal");
+doc.setFontSize(8);
+doc.setTextColor(100,100,100);
+doc.text("Total: "+stat.total+" | Bonnes: "+stat.correctCount+" | Mauvaises: "+stat.wrongCount,20,yPos+18);
+
+yPos+=30;
+doc.setFontSize(9);
+});
+
+yPos+=5;
+if(yPos>pageHeight-40){
+doc.addPage();
+yPos=20;
+}
+
+doc.setFillColor(240,240,240);
+doc.roundedRect(15,yPos,pageWidth-30,25,3,3,"F");
+doc.setFontSize(10);
+doc.setTextColor(100,100,100);
+doc.text("Généré le "+new Date().toLocaleDateString("fr-FR")+" à "+new Date().toLocaleTimeString("fr-FR"),pageWidth/2,yPos+10,{align:"center"});
+doc.text("Quiz Distracteurs au Volant - Sécurité Routière",pageWidth/2,yPos+18,{align:"center"});
+
+doc.save("statistiques-quiz-distracteurs-"+Date.now()+".pdf");
+}
+
+function closeStats(){
+document.getElementById("statsModal").classList.remove("show");
+}
+
+document.addEventListener("keydown",e=>{
+if(e.key==="ArrowRight")nextQuestion();
+if(e.key==="ArrowLeft")prevQuestion();
+if(e.key==="r"||e.key==="R"||e.key===" ")revealAnswer();
+});
+
+showQuestion();
+</script>
+</body>
+</html>
